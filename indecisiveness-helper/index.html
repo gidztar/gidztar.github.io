@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Indecisiveness Helper</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="scripts/jquery-1.11.3.min.js"></script>
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <header>
+        <h1>Indecisiveness Helper</h1>
+    </header>
+    <main>
+        <section>
+          <h2>What should I do today?</h2>
+          <form>
+            <label for="option">Enter option</label>
+            <input type="text" id="option">
+            <button id="add">Add Option</button>
+            <button id="pick">Pick For Me</button>
+            <button id="reset">Start Over</button>
+          </form>
+
+          <ul id="optionsList">
+          </ul>
+
+        </section>
+    </main>
+    <footer>
+    </footer>
+    <script>
+      (function($) {
+
+        var options = [];
+
+        canUseLocalStorage = function () {
+          return (typeof(Storage) !== "undefined");
+        }
+
+        renderOptionsList = function () {
+          var optionsList = $("#optionsList");
+          optionsList.empty();
+
+          $.each(options, function(index, value) {
+            optionsList.append("<li>" + value + "</li>");
+          });
+        }
+
+        optionExists = function (val) {
+          return $.inArray(val, options) != -1;
+        }
+
+        selectListItem = function (index) {
+          $("#optionsList li").eq(index).addClass("selected");
+          $("#add").attr("disabled", true);
+          $("#pick").attr("disabled", true);
+        }
+
+        if (canUseLocalStorage) {
+          var data = localStorage.getItem("data");
+          if (data != null) {
+            var obj = JSON.parse(data);
+
+            var storedDate = new Date(obj.timestamp);
+            var todayDate = new Date();
+
+            var isSameDay = (storedDate.getDate() == todayDate.getDate()
+            && storedDate.getMonth() == todayDate.getMonth()
+            && storedDate.getFullYear() == todayDate.getFullYear());
+
+            if (isSameDay) {
+              options = obj.options;
+              renderOptionsList();
+              selectListItem(obj.selectedIndex);
+            } else {
+              localStorage.removeItem("data");
+            }
+          }
+        }
+
+        $("#add").click(function () {
+          var val = $("#option").val();
+
+          if (val.length > 0 && !optionExists(val)) {
+            options.push(val);
+            renderOptionsList();
+          }
+
+          $('#option').val("");
+
+          return false;
+        });
+
+        $("#pick").click(function () {
+          if (options.length > 0) {
+            var random = Math.floor((Math.random() * (options.length - 1)) + 1);
+            selectListItem(random);
+
+            if (canUseLocalStorage) {
+              var object = { options: options, selectedIndex: random, timestamp: new Date().getTime() };
+              localStorage.setItem("data", JSON.stringify(object));
+            }
+          }
+
+          return false;
+        });
+
+        $("#reset").click(function () {
+          options = [];
+          $("#optionsList").empty();
+          $('#option').val("");
+
+          $("#add").removeAttr("disabled");
+          $("#pick").removeAttr("disabled");
+
+          if (canUseLocalStorage) {
+            localStorage.removeItem("data");
+          }
+
+          return false;
+        });
+
+      })(jQuery);
+    </script>
+  </body>
+</html>
